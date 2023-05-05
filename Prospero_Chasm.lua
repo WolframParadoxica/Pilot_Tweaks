@@ -2,6 +2,7 @@ local mod = modApi:getCurrentMod()
 local path = mod_loader.mods[modApi.currentMod].scriptPath
 local customAnim = require(path .."/customAnim")
 
+--change the description of the pilot skill hover text
 local oldGetSkillInfo = GetSkillInfo
 function GetSkillInfo(skill)
 	if skill == "Flying"    then
@@ -9,6 +10,8 @@ function GetSkillInfo(skill)
 	end
 	return oldGetSkillInfo(skill)
 end
+
+--create custom animation for the shattering icon for unoccupied tiles
 ANIMS.ShatteringTileCentred = Animation:new{
 	Image = "advanced/combat/icons/icon_shatter_anim.png",
 	PosX = -13, PosY = 12,
@@ -16,19 +19,8 @@ ANIMS.ShatteringTileCentred = Animation:new{
 	Loop = true,
 	NumFrames = 7
 }
---		LOG(GetCurrentMission().GetSaveData().podReward.cores)
---		LOG(GetCurrentMission().GetSaveData().map_data.pod)
---		LOG(GetCurrentRegion().player.map_data.pod)
---		LOG(GetCurrentRegion().player.podReward)
---[[local function Para_RegionFinder()
-	for i=0,7 do
-	  for k,v in pairs(RegionData) do
-		if tostring(k)=="region"..i and v.player and v.player.map_data and v.player.map_data.pawn1 then
-		  return v
-		end
-	  end
-	end
-end]]
+
+--this section detects the event that triggers instantly when End Turn or Confirm is pressed
 EXCL = {
     "GetAmbience", 
     "GetBonusStatus", 
@@ -55,55 +47,47 @@ for i,v in pairs(Mission) do
     end 
 end
 
+--this part does the actual tile collapse
 local function ProsperoChasm(pawnId)
 	local pawn = Board:GetPawn(pawnId)
 	local point = pawn:GetSpace()
 	if pawn and pawn:IsAbility("Flying") then
-	
+		--grab the list of pylons for the final missions so we can avoid collapsing the tile under them
 		local pylons = extract_table(Board:GetZone("pylons"))
 	
 		local dam = SpaceDamage(point,0)
 		dam.iTerrain = TERRAIN_HOLE
-		--Board:DamageSpace(dam)
-		-- or (not Para_RegionFinder().player.secret and point == Para_RegionFinder().player.map_data.pod)
 		point = point + DIR_VECTORS[1]
+		--the only defend mission that this can interfere with is the train mission. all the meridia missions with a track of some kind have non-stable units to defend. hence we only bother checking for train mission, which is the one most impacted by this prospero buff.
+		--don't bother collapsing mountains (Vek obstacle), water/ice/cracks (insta-kill potential)
 		while ((Board:IsPawnSpace(point) and Board:GetPawn(point):GetTeam() == TEAM_PLAYER and not Board:GetPawn(point):IsFlying()) or Board:IsBuilding(point) or Board:IsTerrain(point,TERRAIN_WATER) or Board:IsTerrain(point,TERRAIN_MOUNTAIN) or Board:IsTerrain(point,TERRAIN_ICE) or Board:IsCracked(point) or (#pylons > 0 and list_contains(pylons, point)) or (Board:IsPawnSpace(Point(4,6)) and (Board:GetPawn(Point(4,6)):GetType() == "Train_Pawn" or Board:GetPawn(Point(4,6)):GetType() == "Train_Armored") and point.x == 4)) do
 			point = point + DIR_VECTORS[1]
 		end
 		dam.loc = point
-		--if Board:IsTerrain(point,TERRAIN_MOUNTAIN) then dam.iDamage = DAMAGE_DEATH end
 		Board:DamageSpace(dam)
 		Game:TriggerSound("/props/ground_break_tile")
 		GetCurrentMission().ProsperoChasmLoc = point
 	end
 end
 
--- duplicate for anim hook
+-- duplicate function for anim hook that returns the point of collapse
 local function ProsperoChasmDupe(pawnId)
 	local pawn = Board:GetPawn(pawnId)
 	local point = pawn:GetSpace()
 	if pawn and pawn:IsAbility("Flying") then
-	
 		local pylons = extract_table(Board:GetZone("pylons"))
-	
-		local dam = SpaceDamage(point,0)
-		dam.iTerrain = TERRAIN_HOLE
-		--Board:DamageSpace(dam)
-		-- or (not Para_RegionFinder().player.secret and point == Para_RegionFinder().player.map_data.pod)
 		point = point + DIR_VECTORS[1]
 		while ((Board:IsPawnSpace(point) and Board:GetPawn(point):GetTeam() == TEAM_PLAYER and not Board:GetPawn(point):IsFlying()) or Board:IsBuilding(point) or Board:IsTerrain(point,TERRAIN_WATER) or Board:IsTerrain(point,TERRAIN_MOUNTAIN) or Board:IsTerrain(point,TERRAIN_ICE) or Board:IsCracked(point) or (#pylons > 0 and list_contains(pylons, point)) or (Board:IsPawnSpace(Point(4,6)) and (Board:GetPawn(Point(4,6)):GetType() == "Train_Pawn" or Board:GetPawn(Point(4,6)):GetType() == "Train_Armored") and point.x == 4)) do
 			point = point + DIR_VECTORS[1]
 		end
-		dam.loc = point
-		--if Board:IsTerrain(point,TERRAIN_MOUNTAIN) then dam.iDamage = DAMAGE_DEATH end
-		--Board:DamageSpace(dam)
-		--Game:TriggerSound("/props/ground_break_tile")
 		return point
 	end
 end
 
+--this function collapses the next eligible tile if the pod crashes onto the chasm,
+--because otherwise the player completely loses out on the chasm bonus by unlucky time pod location
+--possible for there to be no eligible tile but that's a risk the player can assess for themselves
 local function PodChasm(point)
-	LOG("Pod Landed!")
 	if GetCurrentMission().ProsperoChasmLoc == point then
 		local p = GetCurrentMission().ProsperoChasmLoc + DIR_VECTORS[1]
 		while ((Board:IsPawnSpace(p) and Board:GetPawn(p):GetTeam() == TEAM_PLAYER and not Board:GetPawn(p):IsFlying()) or Board:IsBuilding(p) or Board:IsTerrain(p,TERRAIN_WATER) or Board:IsTerrain(p,TERRAIN_MOUNTAIN) or Board:IsTerrain(p,TERRAIN_ICE) or Board:IsCracked(p)) do
@@ -111,12 +95,15 @@ local function PodChasm(point)
 		end
 		local dam = SpaceDamage(p,0)
 		dam.iTerrain = TERRAIN_HOLE
-		--if Board:IsTerrain(p,TERRAIN_MOUNTAIN) then dam.iDamage = DAMAGE_DEATH end
 		Board:DamageSpace(dam)
 		Game:TriggerSound("/props/ground_break_tile")
 	end
 end
 
+--this part simulates the same effect for deployment inside the volcano
+--could be broken by lag, but unlikely unless the player has like a hundred mods running at the same time
+--with mission update hooks that do stuff to the board during the volcano collapse phase,
+--of which very few, if any, exist outside of this mod and its derivatives
 local function ProsperoVolcano(prevMission, nextMission)
 	local j = -1
 	local Prospero = nil
@@ -131,10 +118,15 @@ local function ProsperoVolcano(prevMission, nextMission)
 		Prospero = Game:GetPawn(j)
 		modApi:conditionalHook(
 			function()
+				--wait until either prospero has deployed, or the last mech has deployed, then proceed
 				return Game == nil or (Prospero ~= nil and Prospero:GetSpace() ~= Point(-1,-1) and not Prospero:IsBusy()) or (Game:GetPawn(2):GetSpace() ~= Point(-1,-1) and not Game:GetPawn(2):IsBusy())
 			end,
 			function()
 				if Prospero ~= nil then
+					--because it is impossible to know where mechs get deployed in advance,
+					--just make it so that the square in front of the front most row of mechs is the one that gets collapsed;
+					--i.e. we don't bother checking for flying allied mech compatibility, unlike the other functions.
+					--it is always guaranteed to not be a pylon, so we don't need to check for that.
 					local dam = SpaceDamage(Prospero:GetSpace() + DIR_VECTORS[1]*(4 - Prospero:GetSpace().x),0)
 					dam.iTerrain = TERRAIN_HOLE
 					Board:DamageSpace(dam)
@@ -155,6 +147,7 @@ local function ChasmAnim(mission)
 			j = i
 		end
 	end
+	--exit if pilot of interest not found
 	if j == -1 then return end
 	if modApi.deployment.isDeploymentPhase(self) and Board:IsValid(Game:GetPawn(j):GetSpace()) and not mission.DeploymentBegun then
 		if Board:IsBlocked(ProsperoChasmDupe(j),PATH_PROJECTILE) then
@@ -168,6 +161,7 @@ local function ChasmAnim(mission)
 			if p~=ProsperoChasmDupe(j) then customAnim:rem(p, "ShatteringTile") customAnim:rem(p, "ShatteringTileCentred") end
 		end
 	end
+	--erase shattering preview once the player clicks Confirm
 	if mission.DeploymentBegun then
 		customAnim:rem(ProsperoChasmDupe(j), "ShatteringTile")
 		customAnim:rem(ProsperoChasmDupe(j), "ShatteringTileCentred")
