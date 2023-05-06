@@ -60,7 +60,7 @@ local function ProsperoChasm(pawnId)
 		point = point + DIR_VECTORS[1]
 		--the only defend mission that this can interfere with is the train mission. all the meridia missions with a track of some kind have non-stable units to defend. hence we only bother checking for train mission, which is the one most impacted by this prospero buff.
 		--don't bother collapsing mountains (Vek obstacle), water/ice/cracks (insta-kill potential)
-		while ((Board:IsPawnSpace(point) and Board:GetPawn(point):GetTeam() == TEAM_PLAYER and not Board:GetPawn(point):IsFlying()) or Board:IsBuilding(point) or Board:IsTerrain(point,TERRAIN_WATER) or Board:IsTerrain(point,TERRAIN_MOUNTAIN) or Board:IsTerrain(point,TERRAIN_ICE) or Board:IsCracked(point) or (#pylons > 0 and list_contains(pylons, point)) or (Board:IsPawnSpace(Point(4,6)) and (Board:GetPawn(Point(4,6)):GetType() == "Train_Pawn" or Board:GetPawn(Point(4,6)):GetType() == "Train_Armored") and point.x == 4)) do
+		while ((Board:IsPawnSpace(point) and Board:GetPawn(point):GetTeam() == TEAM_PLAYER and not Board:GetPawn(point):IsFlying()) or Board:IsBuilding(point) or Board:IsTerrain(point,TERRAIN_WATER) or Board:IsTerrain(point,TERRAIN_MOUNTAIN) or Board:IsTerrain(point,TERRAIN_ICE) or Board:IsTerrain(point,TERRAIN_HOLE) or Board:IsCracked(point) or (#pylons > 0 and list_contains(pylons, point)) or (Board:IsPawnSpace(Point(4,6)) and (Board:GetPawn(Point(4,6)):GetType() == "Train_Pawn" or Board:GetPawn(Point(4,6)):GetType() == "Train_Armored") and point.x == 4)) do
 			point = point + DIR_VECTORS[1]
 		end
 		dam.loc = point
@@ -77,7 +77,7 @@ local function ProsperoChasmDupe(pawnId)
 	if pawn and pawn:IsAbility("Flying") then
 		local pylons = extract_table(Board:GetZone("pylons"))
 		point = point + DIR_VECTORS[1]
-		while ((Board:IsPawnSpace(point) and Board:GetPawn(point):GetTeam() == TEAM_PLAYER and not Board:GetPawn(point):IsFlying()) or Board:IsBuilding(point) or Board:IsTerrain(point,TERRAIN_WATER) or Board:IsTerrain(point,TERRAIN_MOUNTAIN) or Board:IsTerrain(point,TERRAIN_ICE) or Board:IsCracked(point) or (#pylons > 0 and list_contains(pylons, point)) or (Board:IsPawnSpace(Point(4,6)) and (Board:GetPawn(Point(4,6)):GetType() == "Train_Pawn" or Board:GetPawn(Point(4,6)):GetType() == "Train_Armored") and point.x == 4)) do
+		while ((Board:IsPawnSpace(point) and Board:GetPawn(point):GetTeam() == TEAM_PLAYER and not Board:GetPawn(point):IsFlying()) or Board:IsBuilding(point) or Board:IsTerrain(point,TERRAIN_WATER) or Board:IsTerrain(point,TERRAIN_MOUNTAIN) or Board:IsTerrain(point,TERRAIN_ICE) or Board:IsTerrain(point,TERRAIN_HOLE) or Board:IsCracked(point) or (#pylons > 0 and list_contains(pylons, point)) or (Board:IsPawnSpace(Point(4,6)) and (Board:GetPawn(Point(4,6)):GetType() == "Train_Pawn" or Board:GetPawn(Point(4,6)):GetType() == "Train_Armored") and point.x == 4)) do
 			point = point + DIR_VECTORS[1]
 		end
 		return point
