@@ -127,7 +127,13 @@ local function ProsperoVolcano(prevMission, nextMission)
 					--just make it so that the square in front of the front most row of mechs is the one that gets collapsed;
 					--i.e. we don't bother checking for flying allied mech compatibility, unlike the other functions.
 					--it is always guaranteed to not be a pylon, so we don't need to check for that.
+					local pylons = extract_table(Board:GetZone("pylons"))
 					local dam = SpaceDamage(Prospero:GetSpace() + DIR_VECTORS[1]*(4 - Prospero:GetSpace().x),0)
+					local point = dam.loc
+					while (Board:IsTerrain(point,TERRAIN_WATER) or Board:IsTerrain(point,TERRAIN_MOUNTAIN) or (#pylons > 0 and list_contains(pylons, point))) do
+						point = point + DIR_VECTORS[1]
+					end
+					dam.loc = point
 					dam.iTerrain = TERRAIN_HOLE
 					Board:DamageSpace(dam)
 					Game:TriggerSound("/props/ground_break_tile")
