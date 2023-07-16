@@ -105,7 +105,7 @@ local function FireAnim(mission)
 					mission.PrevMechDeploySquares[i+1][k+1] = curr
 					if Board:IsPawnSpace(curr) and Board:GetPawn(curr):GetTeam() == TEAM_PLAYER then
 						--do nothing
-					else
+					elseif Board:IsValid(curr) then
 						customAnim:add(curr, "FirePreview")
 					end
 				end
@@ -139,7 +139,7 @@ local function DeployBurn(pawnId)
 			local curr = point + DIR_VECTORS[i]
 			if Board:IsPawnSpace(curr) and Board:GetPawn(curr):GetTeam() == TEAM_PLAYER then
 				--do nothing
-			else
+			elseif Board:IsValid(curr) then
 				dam.loc = curr
 				Board:DamageSpace(dam)
 			end
