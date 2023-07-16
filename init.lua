@@ -16,9 +16,14 @@ local function init(self)
 	require(self.scriptPath.."Gana_Shield")
 end
 
+function load(self, options, version)
+	--why does this exist?!?!?!
+end
+
 return {
     id = "Pilot_Tweaks",
     name = "Paradoxica's Pilot Tweaks",
     version = "0.1",
     init = init
+    load = load
 }
