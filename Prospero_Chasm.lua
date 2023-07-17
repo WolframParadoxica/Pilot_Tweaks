@@ -54,13 +54,25 @@ local function ProsperoChasm(pawnId)
 	if pawn and pawn:IsAbility("Flying") then
 		--grab the list of pylons for the final missions so we can avoid collapsing the tile under them
 		local pylons = extract_table(Board:GetZone("pylons"))
-	
+
+		local block1 = -1
+		local block2 = -1
+		if GetCurrentMission().ID == "Mission_Dam" then
+			for i = 0,7 do
+				if Board:IsPawnSpace(Point(i,0)) and Board:GetPawn(Point(i,0)):GetType() == "Dam_Pawn" then
+					block1 = i
+					block2 = i+1
+					break
+				end
+			end
+		end
+		
 		local dam = SpaceDamage(point,0)
 		dam.iTerrain = TERRAIN_HOLE
 		point = point + DIR_VECTORS[1]
 		--the only defend mission that this can interfere with is the train mission. all the meridia missions with a track of some kind have non-stable units to defend. hence we only bother checking for train mission, which is the one most impacted by this prospero buff.
 		--don't bother collapsing mountains (Vek obstacle), water/ice/cracks (insta-kill potential)
-		while ((Board:IsPawnSpace(point) and Board:GetPawn(point):GetTeam() == TEAM_PLAYER and not Board:GetPawn(point):IsFlying()) or Board:IsBuilding(point) or Board:IsTerrain(point,TERRAIN_WATER) or Board:IsTerrain(point,TERRAIN_MOUNTAIN) or Board:IsTerrain(point,TERRAIN_ICE) or Board:IsTerrain(point,TERRAIN_HOLE) or Board:IsCracked(point) or (#pylons > 0 and list_contains(pylons, point)) or (Board:IsPawnSpace(Point(4,6)) and (Board:GetPawn(Point(4,6)):GetType() == "Train_Pawn" or Board:GetPawn(Point(4,6)):GetType() == "Train_Armored") and point.x == 4)) do
+		while ((Board:IsPawnSpace(point) and Board:GetPawn(point):GetTeam() == TEAM_PLAYER and not Board:GetPawn(point):IsFlying()) or Board:IsBuilding(point) or Board:IsTerrain(point,TERRAIN_WATER) or Board:IsTerrain(point,TERRAIN_MOUNTAIN) or Board:IsTerrain(point,TERRAIN_ICE) or Board:IsTerrain(point,TERRAIN_HOLE) or Board:IsCracked(point) or (#pylons > 0 and list_contains(pylons, point)) or (Board:IsPawnSpace(Point(4,6)) and (Board:GetPawn(Point(4,6)):GetType() == "Train_Pawn" or Board:GetPawn(Point(4,6)):GetType() == "Train_Armored") and point.x == 4) or Board:GetCustomTile(point) == "ground_rail.png" or Board:GetCustomTile(point) == "ground_rail2.png" or Board:GetCustomTile(point) == "ground_rail3.png" or (GetCurrentMission().ID == "Mission_Dam" and point.x == block1 or point.x == block2)) do
 			point = point + DIR_VECTORS[1]
 		end
 		dam.loc = point
@@ -76,8 +88,21 @@ local function ProsperoChasmDupe(pawnId)
 	local point = pawn:GetSpace()
 	if pawn and pawn:IsAbility("Flying") then
 		local pylons = extract_table(Board:GetZone("pylons"))
+
+		local block1 = -1
+		local block2 = -1
+		if GetCurrentMission().ID == "Mission_Dam" then
+			for i = 0,7 do
+				if Board:IsPawnSpace(Point(i,0)) and Board:GetPawn(Point(i,0)):GetType() == "Dam_Pawn" then
+					block1 = i
+					block2 = i+1
+					break
+				end
+			end
+		end
+		
 		point = point + DIR_VECTORS[1]
-		while ((Board:IsPawnSpace(point) and Board:GetPawn(point):GetTeam() == TEAM_PLAYER and not Board:GetPawn(point):IsFlying()) or Board:IsBuilding(point) or Board:IsTerrain(point,TERRAIN_WATER) or Board:IsTerrain(point,TERRAIN_MOUNTAIN) or Board:IsTerrain(point,TERRAIN_ICE) or Board:IsTerrain(point,TERRAIN_HOLE) or Board:IsCracked(point) or (#pylons > 0 and list_contains(pylons, point)) or (Board:IsPawnSpace(Point(4,6)) and (Board:GetPawn(Point(4,6)):GetType() == "Train_Pawn" or Board:GetPawn(Point(4,6)):GetType() == "Train_Armored") and point.x == 4)) do
+		while ((Board:IsPawnSpace(point) and Board:GetPawn(point):GetTeam() == TEAM_PLAYER and not Board:GetPawn(point):IsFlying()) or Board:IsBuilding(point) or Board:IsTerrain(point,TERRAIN_WATER) or Board:IsTerrain(point,TERRAIN_MOUNTAIN) or Board:IsTerrain(point,TERRAIN_ICE) or Board:IsTerrain(point,TERRAIN_HOLE) or Board:IsCracked(point) or (#pylons > 0 and list_contains(pylons, point)) or (Board:IsPawnSpace(Point(4,6)) and (Board:GetPawn(Point(4,6)):GetType() == "Train_Pawn" or Board:GetPawn(Point(4,6)):GetType() == "Train_Armored") and point.x == 4) or Board:GetCustomTile(point) == "ground_rail.png" or Board:GetCustomTile(point) == "ground_rail2.png" or Board:GetCustomTile(point) == "ground_rail3.png" or (GetCurrentMission().ID == "Mission_Dam" and point.x == block1 or point.x == block2)) do
 			point = point + DIR_VECTORS[1]
 		end
 		return point
